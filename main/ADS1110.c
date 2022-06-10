@@ -222,7 +222,8 @@ uint8_t findMinCode(sample_rate_t sampleRate) {
  */
 int getData(ADS1110_t *ads) {
     uint8_t devConfig;
-    int  devData;
+    uint16_t regData;
+    int16_t valueData;
     uint8_t attemptCount = 0;
     uint8_t buf[3];
     uint8_t len;
@@ -233,7 +234,10 @@ int getData(ADS1110_t *ads) {
     while (attemptCount < MAX_NUM_ATTEMPTS) {                   // make up to 3 attempts to get new data
         len = readFromDevice(ads, buf, sizeof(buf));            // request 3 bytes from device
         if (len == NUM_BYTES) {                                 // if 3 bytes were recieved...
-            devData = buf[0] << 8 | buf[1];                     // read data register
+            regData = buf[0];
+            regData <<= 8;
+            regData |= buf[1];                                      // read data register
+            valueData = *(int16_t *)(&regData);
             devConfig = buf[2];                                 // read config register
             /*
             if (bitRead(devConfig, 7)) {                        // check if new data available...
@@ -242,7 +246,7 @@ int getData(ADS1110_t *ads) {
             } else return devData;                              // if new data is available, return conversion result
             */
            ads->config = devConfig;
-           return devData;
+           return valueData;
         } else {                                                // if 3 bytes were not recieved...
             //emptyBuffer();                                      // empty I2C buffer
             //_comBuffer = ping();                                // store I2C error code to find out what went wrong
